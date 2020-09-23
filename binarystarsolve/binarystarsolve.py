@@ -107,6 +107,10 @@ import sys
 
 def StarSolve(data_file,star = "primary",Period=None,Pguess=None, covariance = False,graphs = True, X = None, err = None,shift = False):
     """
+    
+        Please first read the read me at:
+       	https://github.com/NickMilsonPhysics/binarystarsolve/blomaster/README.md
+        
         Keyword Arguments: 
             
         ** Note some arguments pertain to when parameters of the primary are
