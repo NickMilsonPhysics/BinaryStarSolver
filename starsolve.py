@@ -2,8 +2,10 @@
 AUTHORS
 Caroline Barton, Dalhousie University
 Nicholas Milson, Dalhousie University
+
 SUPERVISOR
 Dr. Philip Bennett, Dalhousie University
+
 DESCRIPTION
 Given a series of radial velocities as a function of time for a star in a 
 binary system, this program solves for various orbital parameters. Namely, it
@@ -21,6 +23,7 @@ V(t) = γ + K*[cos(v(t) + ω) + e*cos(ω)], where v(t) is the true anomaly
 For more information on the implementation of this code, refer to the paper "A 
 Numerical Determination of the Orbital Parameters of Spectroscopic Binary Stars"
 *** (working title) ***
+
 USER INSTRUCTIONS
 All the functionality of this program is accessed via the function StarSolve(). Whether the parameters being solved 
 for are for a primary star or a companion star, StarSolve() is to be used.
@@ -60,10 +63,12 @@ composed of multiple sub data sets with different γ velocities, the program may
 if none of the sub data sets span at least 1.5 periods. Using a period determined by other methods (e.g. photometrically) 
 is often preferable to allowing the program to solve for the period. The convergence of the minimization is fairly
 sensitive to initial period estimates. 
+
 Examples:
 - params, err = StarSolve(data_file = "myRVdata.txt", star = "primary")
 - params, err, C = StarSolve(data_file = "myRVdata.txt", star = "primary", Period = 3784.3, covariance = True)
 - params, err = StarSolve(data_file = "myRVdata.txt", star = "primary", Pguess = 7430, graphs = False)
+
 COMPANION STAR APPLICATION INSTRUCTIONS
 The RV data must be formatted the same way for star = "secondary" as for star = "primary", i.e. as a tab separated txt 
 file, with the first value being the time in Reduced Julian Date (RJD), the second being the radial velocity in km/s,
@@ -79,12 +84,14 @@ discrepancy between average velocities (γ2 - γ1) is returned.
 By default, when star = "secondary", StarSolve() creates two plots of the fit (one for RV vs RJD, one for RV 
 vs phase). If the user would not like these graphs shown, they may use the optional boolean keyword graphs, and set it 
 as False.
+
 Examples:
 - params = StarSolve(data_file = "companion.txt", star = "secondary", X = [-6.4354, 13.956, 203.991, 0.20544, 56108.8, 3770.68])
 - params,err = StarSolve(data_file = "companion.txt", star = "secondary", X = [-6.4354, 13.956, 203.991, 0.20544, 56108.8, 3770.68],
                          err = [0.025298, 0.034264, 0.613298, 0.0020712, 5.80324, 0])
 - params,shift = StarSolve(data_file = "companion.txt", star = "secondary", X = [-6.4354, 13.956, 203.991, 0.20544, 56108.8, 3770.68],
                            shift = True, graphs = False)
+                           
 For more information on the arguments and returns of StarSolve(), refer 
 to the associated Docstring
 """
