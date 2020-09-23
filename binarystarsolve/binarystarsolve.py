@@ -109,7 +109,7 @@ def StarSolve(data_file,star = "primary",Period=None,Pguess=None, covariance = F
     """
     
         Please first read the read me at:
-       	https://github.com/NickMilsonPhysics/binarystarsolve/blomaster/README.md
+       	https://github.com/NickMilsonPhysics/binarystarsolve/blob/master/README.md
         
         Keyword Arguments: 
             
