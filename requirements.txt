@@ -1,0 +1,4 @@
+matplotlib
+numpy	
+scipy
+twine==1.13.0
