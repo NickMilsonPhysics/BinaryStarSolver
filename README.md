@@ -1,17 +1,17 @@
-AUTHORS
+## AUTHORS
 
 Caroline Barton, Dalhousie University & Nicholas Milson, Dalhousie University
 
-SUPERVISOR
+## SUPERVISOR
 
 Dr. Philip Bennett, Dalhousie University
 
-INSTALLATION
+## INSTALLATION
 
 In your command line, call pip install BinaryStarSolver.
 Then, in your python code, write: from binarystarsolve.binarystarsolve import StarSolve
 
-DESCRIPTION
+## DESCRIPTION
 
 Given a series of radial velocities as a function of time for a star in a binary system, this program solves for various orbital parameters. Namely, it solves for eccentricity (e), argument of periastron (ω), velocity amplitude (K), long term average radial velocity (γ), and orbital period (P).
 
@@ -23,13 +23,13 @@ The equation the data is being fitted to is V(t) = γ + K*(cos(v(t) + ω) + e*co
 
 For more information on the implementation of this code, refer to the paper "A Numerical Determination of the Orbital Parameters of Spectroscopic Binary Stars" *** (working title) *** . The paper has been submitted for publication. A link to the paper on the arXiv should be posted very soon. Please check back soon.
 
-USER INSTRUCTIONS
+## USER INSTRUCTIONS
 
 All the functionality of this program is accessed via the function StarSolve(). Whether the parameters being solved for are for a primary star or a companion star, StarSolve() is to be used.
 
 The first two arguments of the function StarSolve() are data_file and star. data_file a string, which is either the name of the txt file (if the file is in your working directory), or the file path (if the file is not in the working directory). star is also a string, where the two options are "primary" or "secondary". star is not case sensitive.
 
-PRIMARY STAR APPLICATION INSTRUCTIONS
+## PRIMARY STAR APPLICATION INSTRUCTIONS
 
 For solving the parameters of the primary star, this program works for two general types of radial velocity data sets. It works for data sets where all the data is from a singular deduction of the radial velocities. It also works for data sets which are composed of sub data sets, where each sub data set's radial velocities were deduced separately from the other subsets. Having a data set composed of subsets with radial velocities deduced separately may result in discrepancies of the long term average radial velocity (γ) between the subsets. This program can deal with this discrepancy by choosing one of the sub data set's γ as the "true" γ, and shifting the other sub data set's radial velocities to match up with the chosen subset.
 
@@ -45,7 +45,7 @@ StarSolve will return a list of the solved parameters (along with asini and f(M)
 
 Warning: If no Period or Pguess is provided, StarSolve() cannot find reliable results if the RV data supplied does not span at least 1.5 periods and will fail if the data spans less than one full period. Furthermore, if the data set is composed of multiple sub data sets with different γ velocities, the program may fail to correct the offset in γ velocities if none of the sub data sets span at least 1.5 periods. Using a period determined by other methods (e.g. photometrically) is often preferable to allowing the program to solve for the period. The convergence of the minimization is fairly sensitive to initial period estimates.
 
-Examples:
+**Examples**:
 
 params, err = StarSolve(data_file = "myRVdata.txt", star = "primary")
 
@@ -53,7 +53,7 @@ params, err, C = StarSolve(data_file = "myRVdata.txt", star = "primary", Period 
 
 params, err = StarSolve(data_file = "myRVdata.txt", star = "primary", Pguess = 7430, graphs = False)
 
-COMPANION STAR APPLICATION INSTRUCTIONS
+## COMPANION STAR APPLICATION INSTRUCTIONS
 
 The RV data must be formatted the same way for star = "secondary" as for star = "primary", i.e. as a tab separated txt file, with the first value being the time in Reduced Julian Date (RJD), the second being the radial velocity in km/s, and the third (optional) value being the weights.
 
@@ -65,7 +65,7 @@ Due to various observational reasons, there is often a discrepancy between the a
 
 By default, when star = "secondary", StarSolve() creates two plots of the fit (one for RV vs RJD, one for RV vs phase). If the user would not like these graphs shown, they may use the optional boolean keyword graphs, and set it as False.
 
-Examples:
+**Examples**:
 
 params = StarSolve(data_file = "companion.txt", star = "secondary", X = [-6.4354, 13.956, 203.991, 0.20544, 56108.8, 3770.68])
 
