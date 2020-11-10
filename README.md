@@ -8,8 +8,8 @@ Dr. Philip Bennett, Dalhousie University
 
 ## INSTALLATION
 
-In your command line, call pip install BinaryStarSolver.
-Then, in your python code, write: from binarystarsolve.binarystarsolve import StarSolve
+In your command line, call _pip install BinaryStarSolver_.
+Then, in your python code, write: _from binarystarsolve.binarystarsolve import StarSolve_
 
 ## DESCRIPTION
 
