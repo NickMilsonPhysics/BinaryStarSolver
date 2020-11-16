@@ -1,6 +1,6 @@
 ## AUTHORS
 
-Caroline Barton, Dalhousie University & Nicholas Milson, Dalhousie University
+Caroline Barton, Dalhousie University and Nicholas Milson, Dalhousie University
 
 ## SUPERVISOR
 
