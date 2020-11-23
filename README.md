@@ -27,7 +27,7 @@ For more information on the implementation of this code, refer to the paper "A P
 
 All the functionality of this program is accessed via the function StarSolve(). Whether the parameters being solved for are for a primary star or a companion star, StarSolve() is to be used.
 
-The first two arguments of the function StarSolve() are data_file and star. data_file a string, which is either the name of the txt file (if the file is in your working directory), or the file path (if the file is not in the working directory). star is also a string, where the two options are "primary" or "secondary". star is not case sensitive.
+The first two arguments of the function StarSolve() are data_file and star. data_file is a string, which is either the name of the txt file (if the file is in your working directory), or the file path (if the file is not in the working directory). star is also a string, where the two options are "primary" or "secondary". star is not case sensitive.
 
 ## PRIMARY STAR APPLICATION INSTRUCTIONS
 
