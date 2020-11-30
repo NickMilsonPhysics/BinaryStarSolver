@@ -21,7 +21,7 @@ Note that K = n * a1 * sin(i) / ((1-e)^0.5), where a1 is the primary star's semi
 
 The equation the data is being fitted to is V(t) = γ + K*(cos(v(t) + ω) + e*cos(ω)), where v(t) is the true anomaly (angle from periastron).
 
-For more information on the implementation of this code, refer to the paper "A Python Code to Determine Orbital Parameters of Spectroscopic Binaries". The paper has been submitted for publication. A link to the paper on the arXiv should be posted very soon. Please check back soon.
+For more information on the implementation of this code, refer to the paper "A Python Code to Determine Orbital Parameters of Spectroscopic Binaries": https://arxiv.org/abs/2011.13914
 
 ## USER INSTRUCTIONS
 
