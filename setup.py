@@ -6,7 +6,7 @@ with open("README.md", "r") as readme_file:
 
 setup(
     name="BinaryStarSolver",
-    version="1.0.1",
+    version="1.1.0",
     author="Nicholas Milson",
     author_email="nick.milson@dal.ca",
     description="Solves for the orbital elements of binary stars, given radial velocity time series",
@@ -18,4 +18,5 @@ setup(
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     ],
+    python_requires='>=3.6'
 )
