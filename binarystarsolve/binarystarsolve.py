@@ -3,7 +3,7 @@ All of the functionality of this package is through the function StarSolve().
 Call help(binarystarsolve.binarystarsolve.StarSolve) for the associated Docstring.
 
 For a more detailed description of how to use this package, please read the ReadMe.
-https://github.com/NickMilsonPhysics/binarystarsolve/blob/master/README.md
+https://github.com/NickMilsonPhysics/BinaryStarSolver/blob/master/README.md
 """
 
 # Import statements
