@@ -12,7 +12,7 @@ setup(
     description="Solves for the orbital elements of binary stars, given radial velocity time series",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="https://github.com/NickMilsonPhysics/binarystarsolve",
+    url="https://github.com/NickMilsonPhysics/BinaryStarSolver",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3.7",
