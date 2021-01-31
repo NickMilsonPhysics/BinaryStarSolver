@@ -30,7 +30,7 @@ def StarSolve(data_file,star = "primary",Period=None,Pguess=None, covariance = F
         
         Keyword Arguments mandatory regardless of situation:
         data_file - String holding the name of the tab separated txt file
-        star - Can be "primary", "secondary", or both. Is "primary" by default.
+        star - Can be "primary", "secondary", or "both". Is "primary" by default.
                star is a string for if the parameters of the primary or secondary
                are being solved for (or both)
                
