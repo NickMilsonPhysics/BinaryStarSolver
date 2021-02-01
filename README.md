@@ -31,7 +31,7 @@ All the functionality of this program is accessed via the function StarSolve(). 
 
 The first two arguments of the function StarSolve() are data_file and star. data_file is a string, which is either the name of the txt file (if the file is in your working directory), or the file path (if the file is not in the working directory). star is also a string, where the three options are "primary", "secondary", or "both". Note that star is not case sensitive.
 
-## PRIMARY STAR APPLICATION INSTRUCTIONS
+### PRIMARY STAR APPLICATION INSTRUCTIONS
 
 For solving the parameters of the primary star, this program works for two general types of radial velocity data sets. It works for data sets where all the data is from a singular deduction of the radial velocities. It also works for data sets which are composed of sub data sets, where each sub data set's radial velocities were deduced separately from the other subsets. Having a data set composed of subsets with radial velocities deduced separately may result in discrepancies of the long term average radial velocity (γ) between the subsets. This program can deal with this discrepancy by choosing one of the sub data sets' γ as the "true" γ, and shifting the other sub data set's radial velocities to match up with the chosen subset.
 
@@ -57,7 +57,7 @@ params, err, C = StarSolve(data_file = "myRVdata.txt", star = "primary", Period 
 
 params, err = StarSolve(data_file = "myRVdata.txt", star = "primary", Pguess = 7430, graphs = False)
 
-## COMPANION STAR APPLICATION INSTRUCTIONS
+### COMPANION STAR APPLICATION INSTRUCTIONS
 
 The RV data must be formatted the same way for star = "secondary" as for star = "primary", i.e. as a tab separated txt file, with the first value being the time in Reduced Julian Date (RJD), the second being the radial velocity in km/s, and the third (optional) value being the weights.
 
@@ -77,7 +77,7 @@ params,err = StarSolve(data_file = "companion.txt", star = "secondary", X = [-6.
 
 params,shift = StarSolve(data_file = "companion.txt", star = "secondary", X = [-6.4354, 13.956, 203.991, 0.20544, 56108.8, 3770.68], shift = True, graphs = False)
 
-##  PRIMARY AND SECONDARY STARS TOGETHER APPLICATION INSTRUCTIONS
+###  PRIMARY AND SECONDARY STARS TOGETHER APPLICATION INSTRUCTIONS
 
 Solving the parameters of both stars at once using the keyword star = "both" only works for data sets that for every time t, there is a V_1(t) point and a V_2(t) point.
 
