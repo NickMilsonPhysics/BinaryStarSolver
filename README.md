@@ -19,7 +19,7 @@ If the orbital parameters of a primary star are already known, the program can a
 
 In the case of double-lined binary where both stars have equally good orbital coverage, then the program can solve for the orbital parameters of both stars at once.
 
-Note that K = n * a1 * sin(i) / ((1-e)^0.5), where a1 is the primary star's semi-major axis, n is the mean motion (n = 2π / P), and i is the inclination angle of the orbit.
+Note that $K = \frac{n a1 \sin(i)}{ ((1-e)^(0.5))}$, where a1 is the primary star's semi-major axis, n is the mean motion (n = 2π / P), and i is the inclination angle of the orbit.
 
 The equation the data is being fitted to is V(t) = γ + K*(cos(v(t) + ω) + e*cos(ω)), where v(t) is the true anomaly (angle from periastron).
 
