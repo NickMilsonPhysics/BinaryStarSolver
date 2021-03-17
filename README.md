@@ -55,7 +55,7 @@ params, err = StarSolve(data_file = "myRVdata.txt", star = "primary")
 ```
 
 ```python
-params, err, C = StarSolve(data_file = "myRVdata.txt", star = "primary", Period = 3784.3, covariance = True)
+params, err, cov = StarSolve(data_file = "myRVdata.txt", star = "primary", Period = 3784.3, covariance = True)
 ```
 
 ```python
@@ -111,7 +111,7 @@ When star = "both", StarSolve will return a list of the solved parameters for ea
 **Examples**:
 
 ```python
-params, err, C = StarSolve(data_file = "rvData.txt", star = "both",covariance = True, zeroEcc = True)
+params, err, cov = StarSolve(data_file = "rvData.txt", star = "both",covariance = True, zeroEcc = True)
 ```
 
 ```python
