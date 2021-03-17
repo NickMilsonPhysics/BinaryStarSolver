@@ -50,15 +50,15 @@ StarSolve will return a list of the solved parameters (along with asini and f(M)
 Warning: If no Period or Pguess is provided, StarSolve() cannot find reliable results if the RV data supplied does not span at least 1.5 periods and will fail if the data spans less than one full period. Furthermore, if the data set is composed of multiple sub data sets with different γ velocities, the program may fail to correct the offset in γ velocities if none of the sub data sets span at least 1.5 periods. Using a period determined by other methods (e.g. photometrically) is often preferable to allowing the program to solve for the period. The convergence of the minimization is fairly sensitive to initial period estimates.
 
 **Examples**:
-```python
+```
 params, err = StarSolve(data_file = "myRVdata.txt", star = "primary")
 ```
 
-```python
+```
 params, err, cov = StarSolve(data_file = "myRVdata.txt", star = "primary", Period = 3784.3, covariance = True)
 ```
 
-```python
+```
 params, err = StarSolve(data_file = "myRVdata.txt", star = "primary", Pguess = 7430, graphs = False)
 ```
 
@@ -76,15 +76,15 @@ By default, when star = "secondary", StarSolve() creates two plots of the fit (o
 
 **Examples**:
 
-```python
+```
 params = StarSolve(data_file = "companion.txt", star = "secondary", X = [-6.4354, 13.956, 203.991, 0.20544, 56108.8, 3770.68])
 ```
 
-```python
+```
 params,err = StarSolve(data_file = "companion.txt", star = "secondary", X = [-6.4354, 13.956, 203.991, 0.20544, 56108.8, 3770.68], err = [0.025298, 0.034264, 0.613298, 0.0020712, 5.80324, 0])
 ```
 
-```python
+```
 params,shift = StarSolve(data_file = "companion.txt", star = "secondary", X = [-6.4354, 13.956, 203.991, 0.20544, 56108.8, 3770.68], shift = True, graphs = False)
 ```
 
@@ -110,11 +110,11 @@ When star = "both", StarSolve will return a list of the solved parameters for ea
 
 **Examples**:
 
-```python
+```
 params, err, cov = StarSolve(data_file = "rvData.txt", star = "both",covariance = True, zeroEcc = True)
 ```
 
-```python
+```
 params, err = StarSolve(data_file = "rvData.txt", star = "both", Pguess = 33.8, graphs = False)
 ```
 
