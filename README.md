@@ -1,3 +1,11 @@
+```javascript
+function fancyAlert(arg) {
+  if(arg) {
+    $.facebox({div:'#foo'})
+  }
+}
+```
+
 ## AUTHORS
 
 Caroline Barton, Dalhousie University and Nicholas Milson, Dalhousie University
