@@ -119,4 +119,4 @@ params, err = StarSolve(data_file = "rvData.txt", star = "both", Pguess = 33.8, 
 ```
 
 
-If there are any questions, please contact me at <ins>nick.milson@dal.ca</ins> or <ins>nick.milson@gmail.com</ins>
+If there are any questions, please contact me at <ins>nmilson@ualberta.ca</ins>, or <ins>nick.milson@dal.ca</ins> 
