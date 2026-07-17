@@ -6,17 +6,21 @@ with open("README.md", "r") as readme_file:
 
 setup(
     name="BinaryStarSolver",
-    version="1.2.0",
+    version="2.0.1",
     author="Nicholas Milson",
-    author_email="nick.milson@dal.ca",
+    author_email="nmilson@ualberta.ca",
     description="Solves for the orbital elements of binary stars, given radial velocity time series",
     long_description=readme,
     long_description_content_type="text/markdown",
     url="https://github.com/NickMilsonPhysics/BinaryStarSolver",
     packages=find_packages(),
+    install_requires=[
+        "numpy",
+        "matplotlib",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     ],
-    python_requires='>=3.6'
+    python_requires=">=3.6",
 )
