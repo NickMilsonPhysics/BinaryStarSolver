@@ -260,9 +260,9 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
         NP = len(timeP)
 
         # find all cross points
+        # PGuess now uses the actual length of the supplied velocity array, so
+        # no special factor-of-two correction is needed for double-lined data.
         Vavg = sum(VP)/NP
-        if star == "both":
-            Vavg /= 2
         low = None
         crossid = []
         for i in range(1, NP-1):
@@ -442,28 +442,62 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
         return [P1, P2]
 
     def PGuessCandidates():
+        """Return plausible periods from chronological single-component data."""
         periodCandidates = []
-        fullGuess = PGuess(test = True)
 
-        if np.isfinite(fullGuess).any():
-            periodCandidates.extend(PGuess())
+        # In the equal-coverage double-lined mode, ``time`` and ``V`` are later
+        # concatenated as [all primary points, all transformed secondary points].
+        # That array is useful for the joint residual, but it is not chronological
+        # and must not be passed to the crossing-based period guesser. Estimate
+        # periods from each original component separately instead.
+        if star == "both":
+            periodDataSets = [(time1, V1), (time2, V2)]
+        else:
+            periodDataSets = [(time, V)]
 
-        gaps = np.diff(time) # looking for big breaks in the data collection
-        positiveGaps = gaps[gaps > 0]
+        for periodTime, periodVelocity in periodDataSets:
+            periodTime = np.asarray(periodTime)
+            periodVelocity = np.asarray(periodVelocity)
+            order = np.argsort(periodTime)
+            periodTime = periodTime[order]
+            periodVelocity = periodVelocity[order]
 
-        if len(positiveGaps) > 0:
-            typicalGap = np.median(positiveGaps)
-            largeGaps = np.where(gaps > 150 * typicalGap)[0]
+            fullGuess = PGuess(
+                test = True,
+                timeData = periodTime,
+                VData = periodVelocity,
+            )
+            if np.isfinite(np.atleast_1d(fullGuess)).any():
+                periodCandidates.extend(PGuess(
+                    timeData = periodTime,
+                    VData = periodVelocity,
+                ))
 
-            if len(largeGaps) > 0:
-                boundaries = [0] + list(largeGaps + 1) + [len(time)]
-                clusters = [(boundaries[i], boundaries[i+1]) for i in range(len(boundaries)-1)]
-                # finding the largest data set across the clusters
-                start, stop = max(clusters, key=lambda bounds: bounds[1] - bounds[0])
-                clusterGuess = PGuess(test = True, timeData = time[start:stop], VData = V[start:stop])
+            gaps = np.diff(periodTime) # looking for big breaks in the data collection
+            positiveGaps = gaps[gaps > 0]
 
-                if np.isfinite(clusterGuess).any():
-                    periodCandidates.extend(PGuess(timeData = time[start:stop], VData = V[start:stop]))
+            if len(positiveGaps) > 0:
+                typicalGap = np.median(positiveGaps)
+                largeGaps = np.where(gaps > 150 * typicalGap)[0]
+
+                if len(largeGaps) > 0:
+                    boundaries = [0] + list(largeGaps + 1) + [len(periodTime)]
+                    clusters = [(boundaries[i], boundaries[i+1]) for i in range(len(boundaries)-1)]
+                    # finding the largest data set across the clusters
+                    start, stop = max(clusters, key=lambda bounds: bounds[1] - bounds[0])
+                    clusterTime = periodTime[start:stop]
+                    clusterVelocity = periodVelocity[start:stop]
+                    clusterGuess = PGuess(
+                        test = True,
+                        timeData = clusterTime,
+                        VData = clusterVelocity,
+                    )
+
+                    if np.isfinite(np.atleast_1d(clusterGuess)).any():
+                        periodCandidates.extend(PGuess(
+                            timeData = clusterTime,
+                            VData = clusterVelocity,
+                        ))
 
         periodCandidates = [P for P in periodCandidates if np.isfinite(P) and P > 0]
         periodCandidates = list(dict.fromkeys(periodCandidates))
@@ -581,12 +615,48 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
         T0 = time[V.argmax()] - (P/(2*np.pi)) * (Emax - e * np.sin(Emax))
         return T0
 
-    def x0(period = None, star = "primary", gam = 0, zeroEcc = False):
+    def validInitialGuess(guess):
+        """Return True when an initial-parameter guess is finite and usable."""
+        if guess is None:
+            return False
+        try:
+            guessArray = np.asarray(guess, dtype = float)
+        except (TypeError, ValueError):
+            return False
+        return guessArray.ndim == 1 and len(guessArray) > 0 and np.all(np.isfinite(guessArray))
+
+
+    def validTrialResult(result, starMode = "primary"):
+        """Reject finite-residual fits that are numerically degenerate."""
+        try:
+            fittedParameters = result[0]
+            if starMode == "both":
+                fittedParameters = fittedParameters[0]
+            fittedParameters = np.asarray(fittedParameters, dtype = float)
+        except (TypeError, ValueError, IndexError):
+            return False
+        if fittedParameters.ndim != 1 or len(fittedParameters) < 6:
+            return False
+        if not np.all(np.isfinite(fittedParameters[:6])):
+            return False
+        fittedK = abs(fittedParameters[1])
+        fittedE = fittedParameters[3]
+        if fittedE < 0 or fittedE >= 1:
+            return False
+        velocityScale = np.percentile(V, 95) - np.percentile(V, 5)
+        if velocityScale > 0 and fittedK < 1e-4 * velocityScale:
+            return False
+        return True
+
+
+    def x0(period = None, star = "primary", gam = 0, zeroEcc = False, fixede = None):
         """
         Makes initial approximation for the orbital parameters γ, K, ω, e, T0, & P.
 
         X0 can find an initial estimate for period, but a user supplied estimate
         can be inputted using the keyword argument 'period'
+
+        fixede can be used to build an initial guess at a chosen eccentricity.
 
         Note that, in the following two scenerios, x0() may fail to make a good
         guess:
@@ -602,10 +672,16 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
         else:
             periodCandidates = [period]
 
+        pOnly = False
+        if star == "secondary_both":
+            pOnly = True
+
         candidateFits = []
         for P in periodCandidates:
 
             K = (max(V) - min(V))/2
+            if not np.isfinite(K) or K <= 0:
+                continue
 
             if star == "both":
                 V0 = gam
@@ -613,11 +689,7 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
                 V0 = sum(V) / len(V)
 
             lowSS = None # holds lowest sum of squared deviations
-            bestX = [None, None, None, None, None, None] # holds best estimate
-
-            pOnly = False
-            if  star == "secondary_both":
-                pOnly = True
+            bestX = None # holds best estimate
 
             if zeroEcc:
 
@@ -625,11 +697,11 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
                 T0 = epoch(w, e, P)
                 bestX = [V0, K, w, e, T0, P]
 
-            else:
+            elif fixede == None:
                 for i in np.arange(0.01, 0.95, 0.01): # iterates through eccentricities
                     e = i
                     temp = (K*e)**-1 * ((max(V) + min(V))* 0.5 - V0)
-                    if abs(temp) <= 1 :
+                    if abs(temp) <= 1:
                         w1 = np.arccos(temp)
                         x1 = [V0, K, w1, e, epoch(w1,e,P), P]
                         w2 = -w1 % (2 * np.pi) # Non principle value
@@ -642,14 +714,30 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
 
                         T0 = epoch(w, e, P)
                         x = [V0, K, w, e, T0, P]
-                        if lowSS == None:
-                            lowSS = SumSquared(x, None, pOnly = pOnly)
+                        currentSS = SumSquared(x, None, pOnly = pOnly)
+                        if lowSS == None or currentSS < lowSS:
+                            lowSS = currentSS
                             bestX = x.copy()
+            else:
+                e = float(fixede)
+                if 0 < e < 1:
+                    temp = (K*e)**-1 * ((max(V) + min(V))* 0.5 - V0)
+                    if abs(temp) <= 1:
+                        w1 = np.arccos(temp)
+                        x1 = [V0, K, w1, e, epoch(w1,e,P), P]
+                        w2 = -w1 % (2 * np.pi) # Non principle value
+                        x2 = [V0, K, w2, e, epoch(w2,e,P), P]
 
-                        elif SumSquared(x, None, pOnly = pOnly) < lowSS:
-                            lowSS = SumSquared(x, None, pOnly = pOnly)
-                            bestX = x.copy()
-            candidateFits.append(bestX.copy())
+                        if SumSquared(x1, None, pOnly = pOnly) < SumSquared(x2, None, pOnly = pOnly):
+                            bestX = x1.copy()
+                        else:
+                            bestX = x2.copy()
+
+            if validInitialGuess(bestX):
+                candidateFits.append(bestX.copy())
+
+        if len(candidateFits) == 0:
+            return None
 
         bestX = candidateFits[0]
         for x in candidateFits[1:]:
@@ -657,6 +745,48 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
                 bestX = x
 
         return bestX
+
+
+    def hasPoorPeriodCoverage(period, starMode = "primary"):
+        """Return True when the observations span less than 1.5 trial periods."""
+        if period is None or not np.isfinite(period) or period <= 0:
+            return False
+
+        if starMode == "secondary_both":
+            dataSpan = max(max(time), max(time2)) - min(min(time), min(time2))
+        else:
+            dataSpan = max(time) - min(time)
+
+        return dataSpan < 1.5 * period
+
+
+    def initialGuessCandidates(period, starMode = "primary", gam = 0):
+        """
+        Return the normal x0 guess and, for poorly covered supplied periods,
+        additional guesses at several fixed eccentricities.
+        """
+        guesses = []
+
+        def addGuess(guess):
+            if not validInitialGuess(guess):
+                return
+            for existingGuess in guesses:
+                if np.allclose(existingGuess, guess, rtol = 1e-10, atol = 1e-10):
+                    return
+            guesses.append(list(guess))
+
+        addGuess(x0(period, star = starMode, gam = gam, zeroEcc = zeroEcc))
+
+        if zeroEcc or not hasPoorPeriodCoverage(period, starMode = starMode):
+            return guesses
+
+        for fixedEccentricity in [0.05, 0.15, 0.25, 0.30, 0.35, 0.50, 0.70, 0.90]:
+            addGuess(x0(period, star = starMode, gam = gam,
+                        zeroEcc = zeroEcc, fixede = fixedEccentricity))
+
+        return guesses
+
+
 
     #%% FIT OF DATA
 
@@ -1313,7 +1443,7 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
 
         return sum(2*temp)
 
-    def PrimarySolve(period = None, Pguess = None,covariance = False, graphs = True,correction = False, webgrapher = False):
+    def PrimarySolve(period = None, Pguess = None,covariance = False, graphs = True,correction = False, webgrapher = False, initialX = None, multiStart = True, returnScore = False, trialOnly = False):
         """
         Solves for orbital parameters from radial velocity data
 
@@ -1341,9 +1471,40 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
         C - Estimated covariance matrix (if argument covariance = True)
 
         """
+        requestedPeriod = Pguess if Pguess != None else period
+        poorCoverage = hasPoorPeriodCoverage(requestedPeriod)
+        if initialX is None and multiStart and poorCoverage:
+            trialGuesses = initialGuessCandidates(requestedPeriod)
+            bestTrialResult = None
+            bestSS = None
+            for trialGuess in trialGuesses:
+                try:
+                    trialResult, trialSS = PrimarySolve(
+                        period = period, Pguess = Pguess, covariance = covariance,
+                        graphs = graphs, correction = correction,
+                        webgrapher = webgrapher,
+                        initialX = trialGuess, multiStart = False,
+                        returnScore = True)
+                except (ConvergenceError, np.linalg.LinAlgError, FloatingPointError,
+                        ValueError, TypeError, ZeroDivisionError):
+                    continue
+                if validTrialResult(trialResult) and np.isfinite(trialSS) and (bestSS is None or trialSS < bestSS):
+                    bestTrialResult = trialResult
+                    bestSS = trialSS
+            if bestTrialResult is not None:
+                if returnScore:
+                    return bestTrialResult, bestSS
+                return bestTrialResult
+            raise ConvergenceError("All initial guesses failed to converge.")
+
         if Pguess != None:
             period = Pguess
-        x = x0(period, zeroEcc = zeroEcc) # initial guess
+        if initialX is None:
+            x = x0(period, zeroEcc = zeroEcc) # initial guess
+        else:
+            x = list(initialX)
+        if not validInitialGuess(x):
+            raise ConvergenceError("Unable to construct a valid initial guess.")
 
         if Pguess != None:
             period = None
@@ -1486,6 +1647,9 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
             else:
                 P = x[5]
         x = [V0,K,w,e,T0,P]
+        finalSS = SumSquared(x, None)
+        if trialOnly:
+            return x, finalSS
 
         # other values to be returned
         nsec = 2*np.pi / (24*3600*P)
@@ -1589,13 +1753,17 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
                 for j in range(len(C)):
                     C[i][j] = sigFig(C[i][j], 5)
             if webgrapher:
-                return x,err,C,webplot
+                result = (x,err,C,webplot)
             else:
-                return x, err, C
+                result = (x, err, C)
         else:
-            return x, err
+            result = (x, err)
 
-    def CompanionSolve_both(period = None, Pguess = None,covariance = False, graphs = False, correction = False, webgrapher = False, gam2set = True):
+        if returnScore:
+            return result, finalSS
+        return result
+
+    def CompanionSolve_both(period = None, Pguess = None,covariance = False, graphs = False, correction = False, webgrapher = False, gam2set = True, initialX = None, multiStart = True, returnScore = False, trialOnly = False):
         """
         Solves for orbital parameters from radial velocity data
 
@@ -1624,11 +1792,41 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
 
         """
 
+        requestedPeriod = Pguess if Pguess != None else period
+        poorCoverage = hasPoorPeriodCoverage(requestedPeriod, starMode = "secondary_both")
+        if initialX is None and multiStart and poorCoverage:
+            trialGuesses = initialGuessCandidates(requestedPeriod, starMode = "secondary_both")
+            bestTrialResult = None
+            bestSS = None
+            for trialGuess in trialGuesses:
+                try:
+                    trialResult, trialSS = CompanionSolve_both(
+                        period = period, Pguess = Pguess, covariance = covariance,
+                        graphs = graphs, correction = correction,
+                        webgrapher = webgrapher,
+                        gam2set = gam2set,
+                        initialX = trialGuess, multiStart = False,
+                        returnScore = True)
+                except (ConvergenceError, np.linalg.LinAlgError, FloatingPointError,
+                        ValueError, TypeError, ZeroDivisionError):
+                    continue
+                if validTrialResult(trialResult, starMode = "secondary_both") and np.isfinite(trialSS) and (bestSS is None or trialSS < bestSS):
+                    bestTrialResult = trialResult
+                    bestSS = trialSS
+            if bestTrialResult is not None:
+                if returnScore:
+                    return bestTrialResult, bestSS
+                return bestTrialResult
+            raise ConvergenceError("All initial guesses failed to converge.")
+
         if Pguess != None:
             period = Pguess
-        x = x0(period, zeroEcc = zeroEcc, star = "secondary_both") # initial guess
-        if x == None:
-            sys.exit()
+        if initialX is None:
+            x = x0(period, zeroEcc = zeroEcc, star = "secondary_both") # initial guess
+        else:
+            x = list(initialX)
+        if not validInitialGuess(x):
+            raise ConvergenceError("Unable to construct a valid initial guess.")
 
         if Pguess != None:
             period = None
@@ -1847,6 +2045,9 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
             if abs(SumSquared(paramsLast, None) - SumSquared(params, None)) < 0.01:
                     break
         x = list(params)
+        finalSS = SumSquared(x, None)
+        if trialOnly:
+            return x, finalSS
 
         # other values to be returned
         nsec = 2*np.pi / (24*3600*P)
@@ -1964,11 +2165,15 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
                 for j in range(len(C)):
                     C[i][j] = sigFig(C[i][j], 5)
             if webgrapher:
-                return x, err, C,webplot
+                result = (x, err, C,webplot)
             else:
-                return x, err, C
+                result = (x, err, C)
         else:
-            return x, err
+            result = (x, err)
+
+        if returnScore:
+            return result, finalSS
+        return result
 
     def CompanionSolve(X, err = [None, None, None, None, None, None], shift = True, graphs = True, webgrapher = False):
         """
@@ -2155,7 +2360,7 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
             Vcomb = np.copy(V) # holds both stars' RV
             weightcomb = np.copy(weight) # holds both stars' weights
 
-    def BothStars(period = None, Pguess = None,covariance = False, graphs = False, correction = False, webgrapher = False):
+    def BothStars(period = None, Pguess = None,covariance = False, graphs = False, correction = False, webgrapher = False, initialX = None, multiStart = True, returnScore = False, trialOnly = False):
         """
         Solves for orbital parameters from radial velocity data, for both stars at once
 
@@ -2185,11 +2390,40 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
 
         # """
 
+        requestedPeriod = Pguess if Pguess != None else period
+        poorCoverage = hasPoorPeriodCoverage(requestedPeriod, starMode = "both")
+        if initialX is None and multiStart and poorCoverage:
+            trialGuesses = initialGuessCandidates(requestedPeriod, starMode = "both", gam = gamma)
+            bestTrialResult = None
+            bestSS = None
+            for trialGuess in trialGuesses:
+                try:
+                    trialResult, trialSS = BothStars(
+                        period = period, Pguess = Pguess, covariance = covariance,
+                        graphs = graphs, correction = correction,
+                        webgrapher = webgrapher,
+                        initialX = trialGuess, multiStart = False,
+                        returnScore = True)
+                except (ConvergenceError, np.linalg.LinAlgError, FloatingPointError,
+                        ValueError, TypeError, ZeroDivisionError):
+                    continue
+                if validTrialResult(trialResult, starMode = "both") and np.isfinite(trialSS) and (bestSS is None or trialSS < bestSS):
+                    bestTrialResult = trialResult
+                    bestSS = trialSS
+            if bestTrialResult is not None:
+                if returnScore:
+                    return bestTrialResult, bestSS
+                return bestTrialResult
+            raise ConvergenceError("All initial guesses failed to converge.")
+
         if Pguess != None:
             period = Pguess
-        x = x0(period, star = "both",gam = gamma, zeroEcc = zeroEcc) # initial guess
-        if x == None:
-            sys.exit()
+        if initialX is None:
+            x = x0(period, star = "both",gam = gamma, zeroEcc = zeroEcc) # initial guess
+        else:
+            x = list(initialX)
+        if not validInitialGuess(x):
+            raise ConvergenceError("Unable to construct a valid initial guess.")
 
         if Pguess != None:
             period = None
@@ -2331,6 +2565,9 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
             else:
                 P = x[5]
         x = [V0,K,w,e,T0,P]
+        finalSS = SumSquared(x, None)
+        if trialOnly:
+            return x, finalSS
 
         # other values to be returned
         nsec = 2*np.pi / (24*3600*P)
@@ -2561,9 +2798,13 @@ def StarSolve(data_file, star="primary", Period=None, Pguess=None, covariance=Fa
                 for i in range(np.size(C,1)):
                     for j in range(np.size(C,2)):
                         C[k][i][j] = sigFig(C[k][i][j], 5)
-            return x, err, C, webplot
+            result = (x, err, C, webplot)
         else:
-            return x, err
+            result = (x, err)
+
+        if returnScore:
+            return result, finalSS
+        return result
 
     def meanMatch(X):
         """
