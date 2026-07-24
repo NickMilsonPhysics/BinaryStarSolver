@@ -7,7 +7,7 @@ Nicholas Milson, Caroline Barton, Dr. Philip Bennett
 In your command line, call _pip install BinaryStarSolver_.
 Then, in your python code, write: _from binarystarsolve.binarystarsolve import StarSolve_
 
-## Wep Application
+## WEB APPLICATION
 binarystarsolver.com
 
 ## DESCRIPTION
