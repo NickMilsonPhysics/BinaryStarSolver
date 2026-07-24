@@ -7,6 +7,9 @@ Nicholas Milson, Caroline Barton, Dr. Philip Bennett
 In your command line, call _pip install BinaryStarSolver_.
 Then, in your python code, write: _from binarystarsolve.binarystarsolve import StarSolve_
 
+## Wep Application
+binarystarsolver.com
+
 ## DESCRIPTION
 
 Given a series of radial velocities as a function of time for a star in a binary system, this program solves for various orbital parameters. Namely, it solves for eccentricity (e), argument of periastron (ω), velocity amplitude (K), long term average radial velocity (γ), time of periastron (T0), and orbital period (P).
